@@ -1,6 +1,6 @@
 angular.module('portainer.app')
-.controller('SchedulesController', ['$scope', '$state', 'Notifications', 'ModalService', 'ScheduleService',
-function ($scope, $state, Notifications, ModalService, ScheduleService) {
+.controller('SchedulesController', ['$scope', '$state', 'Notifications', 'ModalService', 'ScheduleService', 'SettingsService',
+function ($scope, $state, Notifications, ModalService, ScheduleService, SettingsService) {
 
   $scope.removeAction = removeAction;
 
@@ -36,13 +36,21 @@ function ($scope, $state, Notifications, ModalService, ScheduleService) {
   }
 
   function initView() {
-    ScheduleService.schedules()
-    .then(function success(data) {
-      $scope.schedules = data;
-    })
-    .catch(function error(err) {
-      Notifications.error('Failure', err, 'Unable to retrieve schedules');
-      $scope.schedules = [];
+    SettingsService.publicSettings().then(function success(data) {
+      if (!data.EnableHostManagementFeatures) {
+        $state.go('portainer.home');
+      }
+
+      ScheduleService.schedules()
+        .then(function success(data) {
+          $scope.schedules = data;
+        })
+        .catch(function error(err) {
+          Notifications.error('Failure', err, 'Unable to retrieve schedules');
+          $scope.schedules = [];
+        });
+    }).catch(function error(err) {
+      Notifications.error('Failure', err, 'Unable to load application settings');
     });
   }
 
